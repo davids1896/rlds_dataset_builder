@@ -1,4 +1,4 @@
-name: rlds_env
+name: rlds_env2
 channels:
   - conda-forge
 dependencies:
