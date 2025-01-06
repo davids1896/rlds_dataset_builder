@@ -127,8 +127,7 @@ class AgileDataset(tfds.core.GeneratorBasedBuilder):
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Define data splits."""
         return {
-            'train': self._generate_examples(path='/home/realbench/Dataset/pick_up_the_banana_on_the_table_with_your_right_gripper_and_put_it_on_the_plate/train/episode_*.hdf5'),
-            'val': self._generate_examples(path='/home/realbench/Dataset/pick_up_the_banana_on_the_table_with_your_right_gripper_and_put_it_on_the_plate/sample/episode_*.hdf5'),
+            'train': self._generate_examples(path='/home/realbench/Dataset/single_arm_mission/*/*/episode_*.hdf5'),
         }
 
     def _generate_examples(self, path) -> Iterator[Tuple[str, Any]]:
@@ -167,7 +166,12 @@ class AgileDataset(tfds.core.GeneratorBasedBuilder):
                     eef_position = np.array(eef_position)  # 保证是数组类型
                     euler_angles = np.array(euler_angles[:3])  # 提取前三个欧拉角并转为数组
 
-                    action = np.concatenate([gripper_position, eef_position, euler_angles[:3]]).astype(np.float32)  # Combine for 7D action
+                    action = np.concatenate([eef_position, euler_angles[:3], gripper_position]).astype(np.float32)  # Combine for 7D action
+
+                    task_name = episode_path.split('/')[-3]  # Get the folder name (task name)
+                    task_name = task_name.replace('_', ' ')  # Replace underscores with spaces
+
+                   # print(task_name)
 
                     # Create episode step
                     episode.append({
@@ -181,7 +185,7 @@ class AgileDataset(tfds.core.GeneratorBasedBuilder):
                         'is_first': i == 0,
                         'is_last': i == (num_steps - 1),
                         'is_terminal': i == (num_steps - 1),
-                        'language_instruction': 'pick up the banana on the table with your right gripper and put it on the plate.',
+                        'language_instruction': task_name,
                     })
 
                 # Return parsed sample
@@ -193,5 +197,8 @@ class AgileDataset(tfds.core.GeneratorBasedBuilder):
             return episode_path, sample
 
         episode_paths = glob.glob(path)
+        #print(f"Found episode files: {episode_paths}")  # 打印所有找到的文件路径
+
+
         for sample in tqdm(episode_paths, desc="Generating examples", unit="episode"):
             yield _parse_example(sample)
