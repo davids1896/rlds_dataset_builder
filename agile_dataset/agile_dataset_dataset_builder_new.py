@@ -155,9 +155,9 @@ class AgileDataset(tfds.core.GeneratorBasedBuilder):
                         continue
 
                     # Extract the necessary data for action
-                    gripper_position = actions[i][10]  # Assuming gripper position is at index 10
-                    eef_position = actions[i][30:33]  # Assuming EEF position is at indices 30~32
-                    pose_6d = actions[i][33:39]  # 6D pose (33~38) -> Quaternion and rotation
+                    gripper_position = qpos[i][10]  # Assuming gripper position is at index 10
+                    eef_position = qpos[i][30:32]  # Assuming EEF position is at indices 30~32
+                    pose_6d = qpos[i][33:39]  # 6D pose (33~38) -> Quaternion and rotation
 
                     # Convert 6D pose to 3D position
                     rotation_matrix = compute_rotation_matrix_from_ortho6d(pose_6d[None, :])  # (1, 3, 3)
@@ -167,7 +167,7 @@ class AgileDataset(tfds.core.GeneratorBasedBuilder):
                     eef_position = np.array(eef_position)  # 保证是数组类型
                     euler_angles = np.array(euler_angles[:3])  # 提取前三个欧拉角并转为数组
 
-                    action = np.concatenate([gripper_position, eef_position, euler_angles[:3]]).astype(np.float32)  # Combine for 7D action
+                    action = np.concatenate([gripper_position, eef_position, euler_angles[:3]])  # Combine for 7D action
 
                     # Create episode step
                     episode.append({
